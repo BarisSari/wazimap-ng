@@ -213,6 +213,17 @@ class DatasetIndicatorsTestCase(APITestCase):
             dataset=self.second_dataset,
         )
 
+    def test_all_dataset_returned(self):
+        url = reverse("dataset")
+        response = self.client.get(url)
+        eq_(response.status_code, status.HTTP_200_OK)
+
+        results = response.data["results"]
+        number_of_results = response.data["count"]
+        eq_(number_of_results, 2)
+        eq_(results[0]["name"], "first")
+        eq_(results[1]["name"], "second")
+
     def test_correct_dataset_returned(self):
         dataset_id = self.first_dataset.pk
         url = reverse("dataset-indicator-list", kwargs={"dataset_id": dataset_id})
@@ -251,5 +262,5 @@ class DatasetIndicatorsTestCase(APITestCase):
         results = response.data["results"]
         number_of_results = response.data["count"]
         eq_(number_of_results, 2)
-        eq_(results[0]["dataset"], 1)
-        eq_(results[1]["dataset"], 2)
+        eq_(results[0]["dataset"], self.first_dataset.pk)
+        eq_(results[1]["dataset"], self.second_dataset.pk)
