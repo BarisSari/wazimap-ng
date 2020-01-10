@@ -9,7 +9,7 @@ from faker import Faker
 fake = Faker(seed=123456789)
 
 
-class DatasetReadOnlyTestCase(APITestCase):
+class GeneralReadOnlyTestCase(APITestCase):
     def test_dataset_list_is_readonly(self):
         url = reverse("dataset")
         data = {"name": "test"}
@@ -111,7 +111,7 @@ class DatasetReadOnlyTestCase(APITestCase):
         eq_(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
-class DatasetPaginationTestCase(APITestCase):
+class GeneralPaginationTestCase(APITestCase):
     def setUp(self) -> None:
         for i in range(15):
             Dataset.objects.create(name=fake.name())
@@ -131,15 +131,15 @@ class DatasetPaginationTestCase(APITestCase):
         number_of_results = len(response.data["results"])
         eq_(number_of_results, 10)
 
-    # def test_dataset_indicator_list_is_paginated(self):
-    #     # TODO: it is not paginated!
-    #     dataset_id = Dataset.objects.first().pk
-    #     url = reverse("dataset-indicator-list", kwargs={"dataset_id": dataset_id})
-    #     response = self.client.get(url)
-    #     eq_(response.status_code, status.HTTP_200_OK)
-    #
-    #     number_of_results = len(response.data)
-    #     eq_(number_of_results, 10)
+    def test_dataset_indicator_list_is_paginated(self):
+        # TODO: Fails now!
+        dataset_id = Dataset.objects.first().pk
+        url = reverse("dataset-indicator-list", kwargs={"dataset_id": dataset_id})
+        response = self.client.get(url)
+        eq_(response.status_code, status.HTTP_200_OK)
+
+        number_of_results = len(response.data)
+        eq_(number_of_results, 10)
 
     def test_indicator_list_is_paginated(self):
         url = reverse("indicator-list")
@@ -150,14 +150,15 @@ class DatasetPaginationTestCase(APITestCase):
         eq_(number_of_results, 10)
 
     def test_indicator_data_view_is_paginated(self):
+        # TODO: Fails now
         indicator_id = Indicator.objects.first().pk
         url = reverse("indicator-data-view", kwargs={"indicator_id": indicator_id})
         response = self.client.get(url)
         eq_(response.status_code, status.HTTP_200_OK)
 
-        print(response.data)
-        # number_of_results = len(response.data["results"])
-        # eq_(number_of_results, 10)
+        # print(response.data)
+        number_of_results = len(response.data["results"])
+        eq_(number_of_results, 10)
 
     def test_profile_list_is_paginated(self):
         url = reverse("profile-list")
@@ -165,4 +166,43 @@ class DatasetPaginationTestCase(APITestCase):
         eq_(response.status_code, status.HTTP_200_OK)
 
         number_of_results = len(response.data["results"])
-        self.assertLessEqual(number_of_results, 10)
+        eq_(number_of_results, 10)
+
+
+class DatasetIndicatorsTestCase(APITestCase):
+    def setUp(self) -> None:
+        self.first_dataset = Dataset.objects.create(name="first")
+        self.second_dataset = Dataset.objects.create(name="second")
+        self.first_indicator = Indicator.objects.create(name="first_indicator", groups=["first_group"], label="first_label", dataset=self.first_dataset)
+        self.second_indicator = Indicator.objects.create(name="second_indicator", groups=["second_group"], label="second_label", dataset=self.second_dataset)
+
+    def test_correct_dataset_returned(self):
+        dataset_id = 1
+        url = reverse("dataset-indicator-list", kwargs={"dataset_id": dataset_id})
+        response = self.client.get(url)
+        eq_(response.status_code, status.HTTP_200_OK)
+
+        result = response.data[0]
+        print(result)
+        eq_(result["dataset"], 1)
+
+    def test_correct_indicators_returned(self):
+        dataset_id = 1
+        url = reverse("dataset-indicator-list", kwargs={"dataset_id": dataset_id})
+        response = self.client.get(url)
+        eq_(response.status_code, status.HTTP_200_OK)
+
+        result = response.data[0]
+        eq_(result["groups"], ["first_group"])
+        eq_(result["name"], "first_indicator")
+        eq_(result["label"], "first_label")
+
+    def test_incorrect_dataset_fails(self):
+        # TODO: it returns empty instead of failing
+        dataset_id = 123456789
+        url = reverse("dataset-indicator-list", kwargs={"dataset_id": dataset_id})
+        response = self.client.get(url)
+        eq_(response.status_code, status.HTTP_200_OK)
+
+        number_of_results = len(response.data)
+        eq_(number_of_results, 0)
