@@ -1,4 +1,12 @@
-from .models import Dataset, DatasetData, Geography ,Indicator, Profile, ProfileData, ProfileIndicator
+from .models import (
+    Dataset,
+    DatasetData,
+    Geography,
+    Indicator,
+    Profile,
+    ProfileData,
+    ProfileIndicator,
+)
 
 from rest_framework import status
 from rest_framework.reverse import reverse
@@ -116,12 +124,31 @@ class GeneralPaginationTestCase(APITestCase):
         for i in range(15):
             Dataset.objects.create(name=fake.name())
             Profile.objects.create(name=fake.name())
-            Indicator.objects.create(groups=[], name=fake.name(), label=f"test-label-{i}", dataset=Dataset.objects.first())
-            Geography.objects.create(path=f"PATH-{i}", depth=0, name=fake.name(), code=f"code-{i}", level=f"test-level-{i}")
-            data = { "data":{
-                "Language": fake.name(), "Count": fake.random_int(), "geography": f"GEO-{i}"
-            }}
-            DatasetData.objects.create(dataset=Dataset.objects.first(), geography=Geography.objects.first(), data=data)
+            Indicator.objects.create(
+                groups=[],
+                name=fake.name(),
+                label=f"test-label-{i}",
+                dataset=Dataset.objects.first(),
+            )
+            Geography.objects.create(
+                path=f"PATH-{i}",
+                depth=0,
+                name=fake.name(),
+                code=f"code-{i}",
+                level=f"test-level-{i}",
+            )
+            data = {
+                "data": {
+                    "Language": fake.name(),
+                    "Count": fake.random_int(),
+                    "geography": f"GEO-{i}",
+                }
+            }
+            DatasetData.objects.create(
+                dataset=Dataset.objects.first(),
+                geography=Geography.objects.first(),
+                data=data,
+            )
 
     def test_dataset_list_is_paginated(self):
         url = reverse("dataset")
@@ -173,8 +200,18 @@ class DatasetIndicatorsTestCase(APITestCase):
     def setUp(self) -> None:
         self.first_dataset = Dataset.objects.create(name="first")
         self.second_dataset = Dataset.objects.create(name="second")
-        self.first_indicator = Indicator.objects.create(name="first_indicator", groups=["first_group"], label="first_label", dataset=self.first_dataset)
-        self.second_indicator = Indicator.objects.create(name="second_indicator", groups=["second_group"], label="second_label", dataset=self.second_dataset)
+        self.first_indicator = Indicator.objects.create(
+            name="first_indicator",
+            groups=["first_group"],
+            label="first_label",
+            dataset=self.first_dataset,
+        )
+        self.second_indicator = Indicator.objects.create(
+            name="second_indicator",
+            groups=["second_group"],
+            label="second_label",
+            dataset=self.second_dataset,
+        )
 
     def test_correct_dataset_returned(self):
         dataset_id = self.first_dataset.pk
